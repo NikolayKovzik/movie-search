@@ -1,23 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
+import { areValidGenreIDs, isValidReleaseYear, isValidSortingOrder, isValidSortingType, areValidVoteAverageLimits } from "../../utils/url-query-params-validation";
+import { validSortingTypes } from "../../utils/constants";
 
-// get all movies
 
-// filter by genre
-// filter by release year
-// filter by rating (from/to)
 
-// get one movie
+export async function GET(request: NextRequest) {
 
-export async function GET(request: Request) {
-  // const { query } = request;
-
-  // const apiKey = process.env.API_KEY;
   const accessToken = process.env.ACCESS_TOKEN;
-  const baseURL = process.env.TMDB_BASE_URL;
+  const baseURL = process.env.TMDB_BASE_URL || 'https://api.themoviedb.org/3';
 
-  const sortingType = 'popularity' || 'popularity';
-  const sortingOrder = 'desc' || 'asc';
-  const URL = `${baseURL}/discover/movie?sort_by=${sortingType}.${sortingOrder}`;
+  const searchParams = request.nextUrl.searchParams;
+  const sortingOrder = searchParams.get('sorting_order');
+  const sortingType = searchParams.get('sorting_type');
+  const genreIDs = searchParams.get('genres');
+  const releaseYear = Number(searchParams.get('release_year'));
+  const voteAverageGTE = Number(searchParams.get('vote_average_gte'));
+  const voteAverageLTE = Number(searchParams.get('vote_average_lte'));
+  const page = Number(searchParams.get('page'));
+
+  if (!isValidSortingType(sortingType)) {
+    return NextResponse.json({ error: `Invalid sorting_order value. Please use only the following values: ${validSortingTypes.join(', ')}` }, { status: 400 });
+  }
+
+  if (!isValidSortingOrder(sortingOrder)) {
+    return NextResponse.json({ error: "Invalid sorting_type value. Please use only the following values: asc OR desc." }, { status: 400 });
+  }
+
+  if (!areValidGenreIDs(genreIDs)) {
+    return NextResponse.json({ error: "Invalid genres format. Please use only numeric IDs separated by '|'." }, { status: 400 });
+  }
+
+  if (!isValidReleaseYear(releaseYear)) {
+    return NextResponse.json({ error: `Invalid release_year value. Please use only positive integers from 1900 to ${new Date().getFullYear()}` }, { status: 400 });
+  }
+  
+  if (!areValidVoteAverageLimits(voteAverageGTE, voteAverageLTE)) {
+    return NextResponse.json({ error: `Invalid vote_average_lte/vote_average_gte values. Please use only positive integers from 0 to 10. vote_average_lte should be greater than vote_average_gte.` }, { status: 400 });
+  }
+
+  const URL = `${baseURL}/discover/movie?language=en-US` +
+    `&sort_by=${sortingType}.${sortingOrder}` +
+    `&with_genres=${genreIDs}` +
+    `&primary_release_year=${releaseYear}` +
+    `&vote_average.gte=${voteAverageGTE}&vote_average.lte=${voteAverageLTE}` +
+    `&page=${page}`;
 
   const options = {
     method: 'GET',
@@ -30,14 +56,14 @@ export async function GET(request: Request) {
   try {
     const res = await fetch(URL, options);
     console.log(URL);
-    
+
     const films = await res.json();
-    return Response.json(films)
+    return NextResponse.json(films)
 
   } catch (error) {
     if (error instanceof Error) {
-      return Response.json({ error: error.message });
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    return Response.json({ error: 'Unknown Error' });
+    return NextResponse.json({ error: 'Unknown Error' }, { status: 500 });
   }
 }
