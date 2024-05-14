@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { areValidGenreIDs, isValidReleaseYear, isValidSortingOrder, isValidSortingType, areValidVoteAverageLimits } from "../../utils/url-query-params-validation";
-import { validSortingTypes } from "../../utils/constants";
+import { areValidGenreIDs, isValidReleaseYear, isValidSortingOrder, isValidSortingType, areValidVoteAverageLimits } from "../../../utils/url-query-params-validation";
+import { validSortingTypes } from "../../../utils/constants";
 
 
 
