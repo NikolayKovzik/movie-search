@@ -1,7 +1,7 @@
 import { SortingOrder, SortingType } from "../types";
-import { validSortingTypes } from "./constants";
+import { currentYear, startYear, validSortingTypes } from "./constants";
 
-export function isValidSortingType(value: string | null): value is SortingType {
+export function isValidSortingType(value: string | undefined): value is SortingType {
 
   if (value) {
     return validSortingTypes.includes(value);
@@ -10,15 +10,13 @@ export function isValidSortingType(value: string | null): value is SortingType {
 }
 
 
-
-export function isValidSortingOrder(value: string | null): value is SortingOrder {
+export function isValidSortingOrder(value: string | undefined): value is SortingOrder {
 
   if (value) {
     return value === 'desc' || value === 'asc';
   }
   return false;
 }
-
 
 
 export function areValidGenreIDs(value: string | null): value is string {
@@ -30,16 +28,14 @@ export function areValidGenreIDs(value: string | null): value is string {
 }
 
 
-
 export function isValidReleaseYear(value: number): boolean {
 
   if (value) {
-    return Number.isInteger(value) && value >= 1900 && value <= new Date().getFullYear();
+    return Number.isInteger(value) && value >= startYear && value <= currentYear;
   }
   return false;
 
 }
-
 
 
 export function areValidVoteAverageLimits(gteValue: number, lteValue: number): boolean {

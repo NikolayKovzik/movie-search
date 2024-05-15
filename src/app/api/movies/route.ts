@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { areValidGenreIDs, isValidReleaseYear, isValidSortingOrder, isValidSortingType, areValidVoteAverageLimits } from "../../../utils/url-query-params-validation";
-import { validSortingTypes } from "../../../utils/constants";
+import { currentYear, startYear, validSortingTypes } from "../../../utils/constants";
+import { SortingOrder, SortingType } from "../../../types";
 
 
 
@@ -10,8 +11,9 @@ export async function GET(request: NextRequest) {
   const baseURL = process.env.TMDB_BASE_URL || 'https://api.themoviedb.org/3';
 
   const searchParams = request.nextUrl.searchParams;
-  const sortingOrder = searchParams.get('sorting_order');
-  const sortingType = searchParams.get('sorting_type');
+  const sortingPattern = searchParams.get('sort_by')?.split('.');
+  let sortingType = sortingPattern?.[0];
+  let sortingOrder = sortingPattern?.[1];
   const genreIDs = searchParams.get('genres');
   const releaseYear = Number(searchParams.get('release_year'));
   const voteAverageGTE = Number(searchParams.get('vote_average_gte'));
@@ -19,11 +21,11 @@ export async function GET(request: NextRequest) {
   const page = Number(searchParams.get('page'));
 
   if (!isValidSortingType(sortingType)) {
-    return NextResponse.json({ error: `Invalid sorting_order value. Please use only the following values: ${validSortingTypes.join(', ')}` }, { status: 400 });
+    return NextResponse.json({ error: `Invalid sorting_by value. Please use only the following values: ${validSortingTypes.join(', ')}` }, { status: 400 });
   }
 
   if (!isValidSortingOrder(sortingOrder)) {
-    return NextResponse.json({ error: "Invalid sorting_type value. Please use only the following values: asc OR desc." }, { status: 400 });
+    return NextResponse.json({ error: "Invalid sorting_by value. Please use only the following values: asc OR desc." }, { status: 400 });
   }
 
   if (!areValidGenreIDs(genreIDs)) {
@@ -31,7 +33,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (!isValidReleaseYear(releaseYear)) {
-    return NextResponse.json({ error: `Invalid release_year value. Please use only positive integers from 1900 to ${new Date().getFullYear()}` }, { status: 400 });
+    return NextResponse.json({ error: `Invalid release_year value. Please use only positive integers from ${startYear} to ${currentYear}` }, { status: 400 });
   }
   
   if (!areValidVoteAverageLimits(voteAverageGTE, voteAverageLTE)) {
@@ -55,9 +57,8 @@ export async function GET(request: NextRequest) {
 
   try {
     const res = await fetch(URL, options);
-    console.log(URL);
-
     const films = await res.json();
+
     return NextResponse.json(films)
 
   } catch (error) {
