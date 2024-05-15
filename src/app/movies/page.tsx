@@ -1,28 +1,36 @@
-'use client'
+'use client';
 
-import { Container, Grid, Button, Select, ComboboxItem, MultiSelect, keys } from '@mantine/core';
-import FilmCard from '../../components/FilmCard/FilmCard';
 import { useEffect, useState } from 'react';
-import { generateDataRange } from '../../utils/generate-range';
-import { currentYear, ratings, sortingPatterns, startYear } from '../../utils/constants';
+import { Container, Grid, Button, Select, ComboboxItem, MultiSelect } from '@mantine/core';
+import FilmCard from '@/components/FilmCard/FilmCard';
+import { currentYear, ratings, sortingPatterns, startYear } from '@/utils/constants';
+import { generateDataRange } from '@/utils/generate-range';
 
 const MoviesPage = () => {
   const [movies, setMovies] = useState([]);
-  const [genres, setGenres] = useState(null) as any;
-  const [genreValue, setGenreValue] = useState<string[]>([]);
+  const [genres, setGenres] = useState(null) as any; // нейминг
+  const [genreValue, setGenreValue] = useState<string[]>([]); // нейминг
   const [releaseYearValue, setReleaseYearValue] = useState<ComboboxItem | null>(null);
   const [minRating, setMinRating] = useState<ComboboxItem | null>(null);
   const [maxRating, setMaxRating] = useState<ComboboxItem | null>(null);
   const [sortingPattern, setSortingPattern] = useState<ComboboxItem | null>(null);
 
-
   const fetchMovies = async () => {
-    const g = genreValue.reduce((res, item, i) => {
-      return !res ? `${genres[item]}`: `${res}|${genres[item]}`
-     }, '');
+    // нейминг
+    const g = genreValue.reduce((res, item) => {
+      return !res ? `${genres[item]}` : `${res}|${genres[item]}`;
+    }, '');
 
-    console.log('CLIENT MOVIES LINK, :  ', `/api/movies?sort_by=${sortingPattern?.value}&genres=${g}&release_year=${releaseYearValue?.value}&vote_average_gte=${minRating?.value}&vote_average_lte=${maxRating?.value}&page=1`);
-    const res = await fetch(`/api/movies?sort_by=${sortingPattern?.value}&genres=${g}&release_year=${releaseYearValue?.value}&vote_average_gte=${minRating?.value}&vote_average_lte=${maxRating?.value}&page=1`, {
+    const url =
+      `/api/movies?sort_by=${sortingPattern?.value}` +
+      `&genres=${g}` +
+      `&release_year=${releaseYearValue?.value}` +
+      `&vote_average_gte=${minRating?.value}` +
+      `&vote_average_lte=${maxRating?.value}` +
+      '&page=1';
+
+    console.log('CLIENT MOVIES LINK, :  ', url);
+    const res = await fetch(url, {
       headers: {
         accept: 'application/json',
       },
@@ -45,15 +53,13 @@ const MoviesPage = () => {
     const formatedGenres = genres.reduce((res: any, genre: any) => {
       return {
         ...res,
-        [genre.name]: genre.id
+        [genre.name]: genre.id,
       };
     }, {});
-
 
     console.log(formatedGenres);
 
     setGenres(formatedGenres);
-
   };
 
   useEffect(() => {

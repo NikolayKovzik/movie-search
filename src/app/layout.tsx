@@ -1,18 +1,16 @@
-import "@mantine/core/styles.css";
-import React from "react";
-import { MantineProvider, ColorSchemeScript } from "@mantine/core";
-import { theme } from "../../theme";
-import './global.css'
-import { AppWrapper } from "../components/AppWrapper/AppWrapper";
+import '@mantine/core/styles.css';
+import React from 'react';
+import { MantineProvider, ColorSchemeScript } from '@mantine/core';
+import { theme } from '@/../theme';
+import './global.css';
+import { AppWrapper } from '@/components/AppWrapper/AppWrapper';
 
 export const metadata = {
-  title: "Mantine Next.js template",
-  description: "I am using Mantine with Next.js!",
+  title: 'Mantine Next.js template',
+  description: 'I am using Mantine with Next.js!',
 };
 
-
 export default function RootLayout({ children }: { children: any }) {
-
   return (
     <html lang="en">
       <head>
@@ -26,9 +24,7 @@ export default function RootLayout({ children }: { children: any }) {
       <body>
         <MantineProvider theme={theme}>
           <div className="container">
-            <AppWrapper>
-              {children}
-            </AppWrapper>
+            <AppWrapper>{children}</AppWrapper>
           </div>
         </MantineProvider>
       </body>
