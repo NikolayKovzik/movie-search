@@ -1,8 +1,7 @@
+import { ErrorResponse, TMDBGenresResponse } from '@/types';
 import { NextResponse } from 'next/server';
 
-export async function GET() {
-  console.log('HAHAHHAH');
-
+export async function GET(): Promise<NextResponse<TMDBGenresResponse | ErrorResponse>> {
   const accessToken = process.env.ACCESS_TOKEN;
   const baseURL = process.env.TMDB_BASE_URL || 'https://api.themoviedb.org/3';
 
@@ -18,7 +17,7 @@ export async function GET() {
 
   try {
     const res = await fetch(URL, options);
-    const genres = await res.json();
+    const genres: TMDBGenresResponse = await res.json();
 
     return NextResponse.json(genres);
   } catch (error) {

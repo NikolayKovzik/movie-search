@@ -1,11 +1,13 @@
-function generateReversedNumericRange(end: number, start: number) {
+import { ComboboxData } from '@mantine/core';
+
+function generateReversedNumericRange(end: number, start: number): number[] {
   if (end < start) {
     return [];
   }
   return Array.from({ length: end - start + 1 }, (_, i) => end - i);
 }
 
-export function generateDataRange(end: number, start: number) {
+export function generateDataRange(end: number, start: number): ComboboxData {
   console.log('ALERT, generation! (useCallback?)');
 
   const reversedNumericRange = generateReversedNumericRange(end, start);

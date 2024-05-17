@@ -6,9 +6,12 @@ import {
   isValidSortingOrder,
   isValidSortingType,
   areValidVoteAverageLimits,
-} from '../../../utils/url-query-params-validation';
+} from '@/utils/url-query-params-validation';
+import { ErrorResponse, TMDBMoviesResponse } from '@/types';
 
-export async function GET(request: NextRequest): Promise<NextResponse<any>> {
+export async function GET(
+  request: NextRequest
+): Promise<NextResponse<TMDBMoviesResponse | ErrorResponse>> {
   const accessToken = process.env.ACCESS_TOKEN;
   const baseURL = process.env.TMDB_BASE_URL || 'https://api.themoviedb.org/3';
 
@@ -86,7 +89,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<any>> {
 
   try {
     const res = await fetch(URL, options);
-    const films = await res.json();
+    const films: TMDBMoviesResponse = await res.json();
 
     return NextResponse.json(films);
   } catch (error) {

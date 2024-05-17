@@ -10,7 +10,7 @@ export const metadata = {
   description: 'I am using Mantine with Next.js!',
 };
 
-export default function RootLayout({ children }: { children: any }) {
+const RootLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <html lang="en">
       <head>
@@ -30,4 +30,6 @@ export default function RootLayout({ children }: { children: any }) {
       </body>
     </html>
   );
-}
+};
+
+export default RootLayout;

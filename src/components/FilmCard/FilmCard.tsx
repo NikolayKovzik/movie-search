@@ -1,8 +1,9 @@
 // components/FilmCard.js
 import React from 'react';
 import { Card, Image, Text, Group, Rating, Stack, useMantineTheme } from '@mantine/core';
+import { Movie } from '@/types';
 
-const FilmCard = ({ movie }: { movie: any }) => {
+const FilmCard: React.FC<{ movie: Movie }> = ({ movie }) => {
   const theme = useMantineTheme();
   const { poster_path, title, release_date, vote_average, vote_count, genre_ids } = movie;
 
@@ -22,7 +23,7 @@ const FilmCard = ({ movie }: { movie: any }) => {
           </Group>
           <Text size="sm">Genres:</Text>
           <Group>
-            {genre_ids.map((genre: any) => (
+            {genre_ids.map((genre: number) => (
               <Text size="sm" key={genre}>
                 ({genre})
               </Text>

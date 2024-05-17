@@ -5,7 +5,7 @@ export const validSortingTypes = [
   'primary_release_date',
   'vote_average',
   'vote_count',
-];
+] as const;
 
 export const startYear = 1880;
 
@@ -23,7 +23,7 @@ export const ratings = [
   { value: '3', label: '3' },
   { value: '2', label: '2' },
   { value: '1', label: '1' },
-];
+] as const;
 
 export const sortingPatterns = [
   { value: 'popularity.desc', label: 'Most popular' },
@@ -38,4 +38,4 @@ export const sortingPatterns = [
   { value: 'vote_average.asc', label: 'Lowest average score' },
   { value: 'vote_count.desc', label: 'Highest vote count' },
   { value: 'vote_count.asc', label: 'Lowest vote count' },
-];
+] as const;
