@@ -1,7 +1,15 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Container, Grid, Button, Select, ComboboxItem, MultiSelect } from '@mantine/core';
+import {
+  Container,
+  Grid,
+  Button,
+  Select,
+  ComboboxItem,
+  MultiSelect,
+  Pagination,
+} from '@mantine/core';
 import FilmCard from '@/components/FilmCard/FilmCard';
 import { currentYear, ratings, sortingPatterns, startYear } from '@/utils/constants';
 import { generateDataRange } from '@/utils/generate-range';
@@ -12,12 +20,15 @@ import {
   TMDBGenresResponse,
   GenresMapById,
   GenreMaps,
+  TMDBMoviesResponse,
 } from '@/types';
 import { convertGenresToQueryParam } from '@/utils/convert-genres';
 import { createGenreMaps } from '@/utils/create-genre-maps';
 
 const MoviesPage: React.FC = () => {
   const [movies, setMovies] = useState<Movie[]>([]);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [activePage, setActivePage] = useState<number>(1);
   const [genresMapByName, setGenresMapByName] = useState<GenresMapByName | null>(null);
   const [genresMapById, setGenresMapById] = useState<GenresMapById | null>(null);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
@@ -26,7 +37,7 @@ const MoviesPage: React.FC = () => {
   const [selectedMaxRating, setSelectedMaxRating] = useState<ComboboxItem | null>(null);
   const [selectedSortingPattern, setSelectedSortingPattern] = useState<ComboboxItem | null>(null);
 
-  const fetchMovies = async (): Promise<void> => {
+  const fetchMovies = async (pageNumber: number = 1): Promise<void> => {
     if (!genresMapByName) {
       console.log('genres Map is empty!');
       return; //!
@@ -40,14 +51,16 @@ const MoviesPage: React.FC = () => {
       `&release_year=${selectedReleaseYear?.value}` +
       `&vote_average_gte=${selectedMinRating?.value}` +
       `&vote_average_lte=${selectedMaxRating?.value}` +
-      '&page=1';
+      `&page=${pageNumber}`;
 
     console.log('CLIENT MOVIES LINK, :  ', url);
     const res = await fetch(url);
 
-    const films = await res.json();
+    const films: TMDBMoviesResponse = await res.json();
     //если ошибка запроса (например рейтинг gte > lte), то сетается undefined, и происходит ошибка
     setMovies(films.results);
+    setTotalPages(films.total_pages);
+    setActivePage(films.page);
     console.log(films);
   };
 
@@ -116,7 +129,7 @@ const MoviesPage: React.FC = () => {
         value={selectedSortingPattern?.value}
         onChange={(_, option): void => setSelectedSortingPattern(option)}
       />
-      <Button onClick={fetchMovies}>CLICK</Button>
+      <Button onClick={() => fetchMovies(1)}>CLICK</Button>
       <Container>
         <Grid>
           {mappedMovies.map((movie, index) => (
@@ -126,6 +139,7 @@ const MoviesPage: React.FC = () => {
           ))}
         </Grid>
       </Container>
+      <Pagination total={totalPages} value={activePage} onChange={fetchMovies} mt="sm" />
     </>
   );
 };
