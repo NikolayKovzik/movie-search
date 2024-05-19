@@ -3,9 +3,9 @@ import React from 'react';
 import { Card, Image, Text, Group, Rating, Stack, useMantineTheme } from '@mantine/core';
 import { Movie } from '@/types';
 
-const FilmCard: React.FC<{ movie: Movie }> = ({ movie }) => {
+const FilmCard: React.FC<{ movie: Movie; genres: string[] }> = ({ movie, genres }) => {
   const theme = useMantineTheme();
-  const { poster_path, title, release_date, vote_average, vote_count, genre_ids } = movie;
+  const { poster_path, title, release_date, vote_average, vote_count } = movie;
 
   return (
     <Card shadow="sm" p="lg" radius="md" withBorder>
@@ -23,7 +23,7 @@ const FilmCard: React.FC<{ movie: Movie }> = ({ movie }) => {
           </Group>
           <Text size="sm">Genres:</Text>
           <Group>
-            {genre_ids.map((genre: number) => (
+            {genres.map((genre: string) => (
               <Text size="sm" key={genre}>
                 ({genre})
               </Text>

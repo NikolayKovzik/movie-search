@@ -5,11 +5,21 @@ import { Container, Grid, Button, Select, ComboboxItem, MultiSelect } from '@man
 import FilmCard from '@/components/FilmCard/FilmCard';
 import { currentYear, ratings, sortingPatterns, startYear } from '@/utils/constants';
 import { generateDataRange } from '@/utils/generate-range';
-import { GenresMap, Genre, Genres, Movie, TMDBGenresResponse } from '@/types';
+import {
+  GenresMapByName,
+  Genres,
+  Movie,
+  TMDBGenresResponse,
+  GenresMapById,
+  GenreMaps,
+} from '@/types';
+import { convertGenresToQueryParam } from '@/utils/convert-genres';
+import { createGenreMaps } from '@/utils/create-genre-maps';
 
 const MoviesPage: React.FC = () => {
   const [movies, setMovies] = useState<Movie[]>([]);
-  const [genresMap, setGenresMap] = useState<GenresMap | null>(null);
+  const [genresMapByName, setGenresMapByName] = useState<GenresMapByName | null>(null);
+  const [genresMapById, setGenresMapById] = useState<GenresMapById | null>(null);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedReleaseYear, setSelectedReleaseYear] = useState<ComboboxItem | null>(null);
   const [selectedMinRating, setSelectedMinRating] = useState<ComboboxItem | null>(null);
@@ -17,14 +27,12 @@ const MoviesPage: React.FC = () => {
   const [selectedSortingPattern, setSelectedSortingPattern] = useState<ComboboxItem | null>(null);
 
   const fetchMovies = async (): Promise<void> => {
-    if (!genresMap) {
+    if (!genresMapByName) {
       console.log('genres Map is empty!');
       return; //!
     }
 
-    const genreQueryParam = selectedGenres.reduce((res, item) => {
-      return !res ? `${genresMap[item]}` : `${res}|${genresMap[item]}`;
-    }, '');
+    const genreQueryParam = convertGenresToQueryParam(selectedGenres, genresMapByName);
 
     const url =
       `/api/movies?sort_by=${selectedSortingPattern?.value}` +
@@ -48,28 +56,35 @@ const MoviesPage: React.FC = () => {
 
     const tmdbGenresResponse: TMDBGenresResponse = await res.json();
     const genres: Genres = tmdbGenresResponse.genres;
-    const genresMap: GenresMap = genres.reduce((res: GenresMap, genre: Genre) => {
-      return {
-        ...res,
-        [genre.name]: genre.id,
-      };
-    }, {});
 
-    setGenresMap(genresMap);
+    const { mapByName, mapById }: GenreMaps = createGenreMaps(genres);
+
+    setGenresMapByName(mapByName);
+    setGenresMapById(mapById);
   };
 
   useEffect(() => {
     fetchGenres();
   }, []);
 
-  const genreKeys = useMemo(() => (genresMap ? Object.keys(genresMap) : []), [genresMap]);
+  const genreKeys = useMemo(
+    () => (genresMapByName ? Object.keys(genresMapByName) : []),
+    [genresMapByName]
+  );
+
+  const mappedMovies = useMemo(() => {
+    return movies.map(movie => ({
+      ...movie,
+      genreNames: movie.genre_ids.map(id => genresMapById?.[id] || ''),
+    }));
+  }, [movies, genresMapById]);
 
   return (
     <>
       <MultiSelect
         label="Genres"
         placeholder="Select genres"
-        data={genresMap ? genreKeys : []}
+        data={genresMapByName ? genreKeys : []}
         value={selectedGenres}
         onChange={setSelectedGenres}
       />
@@ -104,9 +119,9 @@ const MoviesPage: React.FC = () => {
       <Button onClick={fetchMovies}>CLICK</Button>
       <Container>
         <Grid>
-          {movies.map((movie, index) => (
+          {mappedMovies.map((movie, index) => (
             <Grid.Col span={6} key={index}>
-              <FilmCard movie={movie} />
+              <FilmCard movie={movie} genres={movie.genreNames} />
             </Grid.Col>
           ))}
         </Grid>

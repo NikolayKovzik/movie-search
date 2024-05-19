@@ -31,8 +31,17 @@ type ExtractArrType<Arr> = Arr extends (infer G)[] ? G : never;
 
 export type Genre = ExtractArrType<Genres>;
 
-export type GenresMap = {
+export type GenresMapByName = {
   [key: string]: number;
+};
+
+export type GenresMapById = {
+  [key: number]: string;
+};
+
+export type GenreMaps = {
+  mapByName: GenresMapByName;
+  mapById: GenresMapById;
 };
 
 export type TMDBMoviesResponse = {
