@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Container,
   Grid,
@@ -11,7 +11,17 @@ import {
   Pagination,
 } from '@mantine/core';
 import FilmCard from '@/components/FilmCard/FilmCard';
-import { currentYear, ratings, sortingPatterns, startYear } from '@/utils/constants';
+import {
+  currentYear,
+  defaultGenres,
+  defaultMaxRating,
+  defaultMinRating,
+  defaultReleaseYear,
+  defaultSortingPattern,
+  ratings,
+  sortingPatterns,
+  startYear,
+} from '@/utils/constants';
 import { generateDataRange } from '@/utils/generate-range';
 import {
   GenresMapByName,
@@ -31,11 +41,14 @@ const MoviesPage: React.FC = () => {
   const [activePage, setActivePage] = useState<number>(1);
   const [genresMapByName, setGenresMapByName] = useState<GenresMapByName | null>(null);
   const [genresMapById, setGenresMapById] = useState<GenresMapById | null>(null);
-  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
-  const [selectedReleaseYear, setSelectedReleaseYear] = useState<ComboboxItem | null>(null);
-  const [selectedMinRating, setSelectedMinRating] = useState<ComboboxItem | null>(null);
-  const [selectedMaxRating, setSelectedMaxRating] = useState<ComboboxItem | null>(null);
-  const [selectedSortingPattern, setSelectedSortingPattern] = useState<ComboboxItem | null>(null);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>(defaultGenres);
+  const [selectedReleaseYear, setSelectedReleaseYear] = useState<ComboboxItem>(defaultReleaseYear);
+  const [selectedMinRating, setSelectedMinRating] = useState<ComboboxItem>(defaultMinRating);
+  const [selectedMaxRating, setSelectedMaxRating] = useState<ComboboxItem>(defaultMaxRating);
+  const [selectedSortingPattern, setSelectedSortingPattern] =
+    useState<ComboboxItem>(defaultSortingPattern);
+
+  const initialRender = useRef(true); //! any better way?
 
   const fetchMovies = async (pageNumber: number = 1): Promise<void> => {
     if (!genresMapByName) {
@@ -46,11 +59,11 @@ const MoviesPage: React.FC = () => {
     const genreQueryParam = convertGenresToQueryParam(selectedGenres, genresMapByName);
 
     const url =
-      `/api/movies?sort_by=${selectedSortingPattern?.value}` +
+      `/api/movies?sort_by=${selectedSortingPattern.value}` +
       `&genres=${genreQueryParam}` +
-      `&release_year=${selectedReleaseYear?.value}` +
-      `&vote_average_gte=${selectedMinRating?.value}` +
-      `&vote_average_lte=${selectedMaxRating?.value}` +
+      `&release_year=${selectedReleaseYear.value}` +
+      `&vote_average_gte=${selectedMinRating.value}` +
+      `&vote_average_lte=${selectedMaxRating.value}` +
       `&page=${pageNumber}`;
 
     console.log('CLIENT MOVIES LINK, :  ', url);
@@ -80,12 +93,22 @@ const MoviesPage: React.FC = () => {
     fetchGenres();
   }, []);
 
+  useEffect(() => {
+    if (initialRender.current) {
+      initialRender.current = false;
+    } else {
+      fetchMovies(1);
+    }
+  }, [genresMapByName]);
+
   const genreKeys = useMemo(
     () => (genresMapByName ? Object.keys(genresMapByName) : []),
     [genresMapByName]
   );
 
   const mappedMovies = useMemo(() => {
+    if (!movies) return [];
+
     return movies.map(movie => ({
       ...movie,
       genreNames: movie.genre_ids.map(id => genresMapById?.[id] || ''),
@@ -105,28 +128,28 @@ const MoviesPage: React.FC = () => {
         label="Release year"
         placeholder="Select release year"
         data={generateDataRange(currentYear, startYear)}
-        value={selectedReleaseYear?.value}
+        value={selectedReleaseYear.value}
         onChange={(_, option): void => setSelectedReleaseYear(option)}
       />
       <Select
         label="Select Minimum Rating"
         placeholder="From"
         data={ratings}
-        value={selectedMinRating?.value}
+        value={selectedMinRating.value}
         onChange={(_, option): void => setSelectedMinRating(option)}
       />
       <Select
         label="Select Maximum Rating"
         placeholder="To"
         data={ratings}
-        value={selectedMaxRating?.value}
+        value={selectedMaxRating.value}
         onChange={(_, option): void => setSelectedMaxRating(option)}
       />
       <Select
         label="Sort by"
         placeholder="REPLACE BY DEFAULT VALUE"
         data={sortingPatterns}
-        value={selectedSortingPattern?.value}
+        value={selectedSortingPattern.value}
         onChange={(_, option): void => setSelectedSortingPattern(option)}
       />
       <Button onClick={() => fetchMovies(1)}>CLICK</Button>
