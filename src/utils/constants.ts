@@ -45,3 +45,5 @@ export const defaultReleaseYear = { value: `${currentYear}`, label: `${currentYe
 export const defaultSortingPattern = { value: 'popularity.desc', label: 'Most popular' };
 export const defaultMinRating = { value: '7', label: '7' };
 export const defaultMaxRating = { value: '10', label: '10' };
+
+export const RATED_MOVIES_STORAGE_KEY = 'tmdb_user_ratings';

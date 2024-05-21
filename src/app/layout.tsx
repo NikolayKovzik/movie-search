@@ -3,7 +3,7 @@ import React from 'react';
 import { MantineProvider, ColorSchemeScript } from '@mantine/core';
 import { theme } from '@/../theme';
 import './global.css';
-import { AppWrapper } from '@/components/AppWrapper/AppWrapper';
+import AppWrapper from '@/components/AppWrapper/AppWrapper';
 
 export const metadata = {
   title: 'Mantine Next.js template',

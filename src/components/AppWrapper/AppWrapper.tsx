@@ -2,8 +2,9 @@
 
 import { AppShell, Burger } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import Link from 'next/link';
 
-export function AppWrapper({ children }: { children: any }) {
+const AppWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [opened, { toggle }] = useDisclosure();
   return (
     <AppShell
@@ -15,7 +16,8 @@ export function AppWrapper({ children }: { children: any }) {
       padding="md"
     >
       <AppShell.Navbar p="md" style={{ position: 'absolute', backgroundColor: 'yellow' }}>
-        Navbar
+        <Link href="/movies">Movies</Link>
+        <Link href="/rated-movies">Rated Movies</Link>
       </AppShell.Navbar>
 
       <AppShell.Main>
@@ -24,4 +26,6 @@ export function AppWrapper({ children }: { children: any }) {
       </AppShell.Main>
     </AppShell>
   );
-}
+};
+
+export default AppWrapper;

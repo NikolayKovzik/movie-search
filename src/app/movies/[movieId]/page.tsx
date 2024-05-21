@@ -6,8 +6,6 @@ import { useEffect, useState } from 'react';
 
 const MoviePage: React.FC<{
   params: { movieId: string };
-  //!
-  /* eslint-disable react/prop-types */
 }> = ({ params }) => {
   const [movie, setMovie] = useState<DetailedMovie | null>(null);
 

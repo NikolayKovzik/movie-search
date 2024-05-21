@@ -126,3 +126,7 @@ export type TMDBGenresResponse = {
 export type ErrorResponse = {
   error: string;
 };
+
+export type StoredMovieRating = {
+  [key: string]: number;
+};

@@ -34,7 +34,6 @@ import {
 } from '@/types';
 import { convertGenresToQueryParam } from '@/utils/convert-genres';
 import { createGenreMaps } from '@/utils/create-genre-maps';
-import Link from 'next/link';
 
 const MoviesPage: React.FC = () => {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -153,14 +152,12 @@ const MoviesPage: React.FC = () => {
         value={selectedSortingPattern.value}
         onChange={(_, option): void => setSelectedSortingPattern(option)}
       />
-      <Button onClick={() => fetchMovies(1)}>CLICK</Button>
+      <Button onClick={(): Promise<void> => fetchMovies(1)}>CLICK</Button>
       <Container>
         <Grid>
           {mappedMovies.map((movie, index) => (
             <Grid.Col span={6} key={index}>
-              <Link href={`/movies/${movie.id}`} passHref>
-                <FilmCard movie={movie} genres={movie.genreNames} />
-              </Link>
+              <FilmCard movie={movie} genres={movie.genreNames} />
             </Grid.Col>
           ))}
         </Grid>
