@@ -127,6 +127,6 @@ export type ErrorResponse = {
   error: string;
 };
 
-export type StoredMovieRating = {
-  [key: string]: number;
+export type StoredRatedMovies = {
+  [id: string]: number;
 };

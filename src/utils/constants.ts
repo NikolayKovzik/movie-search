@@ -47,3 +47,5 @@ export const defaultMinRating = { value: '7', label: '7' };
 export const defaultMaxRating = { value: '10', label: '10' };
 
 export const RATED_MOVIES_STORAGE_KEY = 'tmdb_user_ratings';
+
+export const ITEMS_PER_PAGE = 4;

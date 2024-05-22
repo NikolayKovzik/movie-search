@@ -3,7 +3,7 @@ import { currentYear, startYear, validSortingTypes } from './constants';
 
 export function isValidSortingType(value: string | undefined): value is SortingType {
   if (value) {
-    return validSortingTypes.includes(value);
+    return (validSortingTypes as readonly string[]).includes(value);
   }
   return false;
 }

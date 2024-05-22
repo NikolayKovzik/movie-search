@@ -39,7 +39,7 @@ const MoviesPage: React.FC = () => {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [activePage, setActivePage] = useState<number>(1);
-  const [genresMapByName, setGenresMapByName] = useState<GenresMapByName | null>(null);
+  const [genresMapByName, setGenresMapByName] = useState<GenresMapByName | null>(null); //! Bidirectional?
   const [genresMapById, setGenresMapById] = useState<GenresMapById | null>(null);
   const [selectedGenres, setSelectedGenres] = useState<string[]>(defaultGenres);
   const [selectedReleaseYear, setSelectedReleaseYear] = useState<ComboboxItem>(defaultReleaseYear);
