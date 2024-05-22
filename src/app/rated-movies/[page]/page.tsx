@@ -1,16 +1,21 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { Container, Grid, Pagination, Text } from '@mantine/core';
 import FilmCard from '@/components/FilmCard/FilmCard';
 import { DetailedMovie, StoredRatedMovies } from '@/types';
 import { getMoviesFromLocalStorage } from '@/utils/local-storage-handlers';
 import { ITEMS_PER_PAGE } from '@/utils/constants';
 
-const RatedMoviesPage: React.FC = () => {
+const RatedMoviesPage: React.FC<{ params: { page: string } }> = ({ params }) => {
+  const router = useRouter();
+  const pageFromUrl = parseInt(params.page) || 1;
+  //! Otherwise, redirect to notfound.
+
   const [ratedMovies, setRatedMovies] = useState<DetailedMovie[]>([]);
   const [totalPages, setTotalPages] = useState<number>(1);
-  const [activePage, setActivePage] = useState<number>(1);
+  const [activePage, setActivePage] = useState<number>(pageFromUrl);
 
   const fetchRatedMovies = async (): Promise<void> => {
     const storedRatedMovies: StoredRatedMovies = getMoviesFromLocalStorage();
@@ -24,16 +29,21 @@ const RatedMoviesPage: React.FC = () => {
 
     setRatedMovies(movies);
     setTotalPages(Math.ceil(movies.length / ITEMS_PER_PAGE));
-    setActivePage(1);
-  };
-
-  const calcDisplayedMovies = (): DetailedMovie[] => {
-    return ratedMovies.slice((activePage - 1) * ITEMS_PER_PAGE, activePage * ITEMS_PER_PAGE);
   };
 
   useEffect(() => {
     fetchRatedMovies();
   }, []);
+
+  useEffect(() => {
+    if (activePage !== pageFromUrl) {
+      router.push(`/rated-movies/${activePage}`);
+    }
+  }, [activePage]);
+
+  const calcDisplayedMovies = (): DetailedMovie[] => {
+    return ratedMovies.slice((activePage - 1) * ITEMS_PER_PAGE, activePage * ITEMS_PER_PAGE);
+  };
 
   const removeMovieFromRated = (movieId: number): void => {
     const updatedMovies = ratedMovies.filter(movie => movie.id !== movieId);
