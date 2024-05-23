@@ -1,15 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Container,
-  Grid,
-  Button,
-  Select,
-  ComboboxItem,
-  MultiSelect,
-  Pagination,
-} from '@mantine/core';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Container, Grid, Select, ComboboxItem, MultiSelect, Pagination } from '@mantine/core';
 import FilmCard from '@/components/FilmCard/FilmCard';
 import {
   currentYear,
@@ -35,22 +28,82 @@ import {
 import { convertGenresToQueryParam } from '@/utils/convert-genres';
 import { createGenreMaps } from '@/utils/create-genre-maps';
 
-const MoviesPage: React.FC = () => {
+const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const urlGenres = searchParams.get('genres')?.split(',');
+  const urlReleaseYear = searchParams.get('release_year');
+  const urlMinRating = searchParams.get('min_rating');
+  const urlMaxRating = searchParams.get('max_rating');
+  const urlSortingPattern = searchParams.get('sorting_pattern');
+
+  const initialGenres = urlGenres && urlGenres.length ? urlGenres : defaultGenres;
+  const initialReleaseYear = urlReleaseYear
+    ? {
+        value: urlReleaseYear,
+        label: urlReleaseYear,
+      }
+    : defaultReleaseYear;
+  const initialMinRating = urlMinRating
+    ? {
+        value: urlMinRating,
+        label: urlMinRating,
+      }
+    : defaultMinRating;
+  const initialMaxRating = urlMaxRating
+    ? {
+        value: urlMaxRating,
+        label: urlMaxRating,
+      }
+    : defaultMaxRating;
+  const initialSortingPattern = urlSortingPattern
+    ? {
+        value: urlSortingPattern,
+        label: sortingPatterns.find(item => item.value === urlSortingPattern)?.label as string, //!
+      }
+    : defaultSortingPattern;
+
+  const currentPage = parseInt(params.pageNumber) || 1;
   const [movies, setMovies] = useState<Movie[]>([]);
   const [totalPages, setTotalPages] = useState<number>(1);
-  const [activePage, setActivePage] = useState<number>(1);
+  const [activePage, setActivePage] = useState<number>(currentPage);
   const [genresMapByName, setGenresMapByName] = useState<GenresMapByName | null>(null); //! Bidirectional?
   const [genresMapById, setGenresMapById] = useState<GenresMapById | null>(null);
-  const [selectedGenres, setSelectedGenres] = useState<string[]>(defaultGenres);
-  const [selectedReleaseYear, setSelectedReleaseYear] = useState<ComboboxItem>(defaultReleaseYear);
-  const [selectedMinRating, setSelectedMinRating] = useState<ComboboxItem>(defaultMinRating);
-  const [selectedMaxRating, setSelectedMaxRating] = useState<ComboboxItem>(defaultMaxRating);
+
+  const [selectedGenres, setSelectedGenres] = useState<string[]>(initialGenres);
+  const [selectedReleaseYear, setSelectedReleaseYear] = useState<ComboboxItem>(initialReleaseYear);
+  const [selectedMinRating, setSelectedMinRating] = useState<ComboboxItem>(initialMinRating);
+  const [selectedMaxRating, setSelectedMaxRating] = useState<ComboboxItem>(initialMaxRating);
   const [selectedSortingPattern, setSelectedSortingPattern] =
-    useState<ComboboxItem>(defaultSortingPattern);
+    useState<ComboboxItem>(initialSortingPattern);
 
-  const initialRender = useRef(true); //! any better way?
+  useEffect(() => {
+    fetchGenres();
+  }, []);
 
-  const fetchMovies = async (pageNumber: number = 1): Promise<void> => {
+  useEffect(() => {
+    router.replace(
+      `/movies/page/${currentPage}` +
+        `?genres=${selectedGenres.join(',')}` +
+        `&release_year=${selectedReleaseYear.value}` +
+        `&min_rating=${selectedMinRating.value}` +
+        `&max_rating=${selectedMaxRating.value}` +
+        `&sorting_pattern=${selectedSortingPattern.value}`
+    );
+  }, [
+    selectedGenres,
+    selectedMaxRating.value,
+    selectedMinRating.value,
+    selectedReleaseYear.value,
+    selectedSortingPattern.value,
+  ]);
+
+  useEffect(() => {
+    fetchMovies(currentPage);
+  }, [currentPage, genresMapByName]);
+
+  const fetchMovies = async (pageNumber: number): Promise<void> => {
     if (!genresMapByName) {
       console.log('genres Map is empty!');
       return; //!
@@ -70,7 +123,7 @@ const MoviesPage: React.FC = () => {
     const res = await fetch(url);
 
     const films: TMDBMoviesResponse = await res.json();
-    //если ошибка запроса (например рейтинг gte > lte), то сетается undefined, и происходит ошибка
+    //! если ошибка запроса (например рейтинг gte > lte), то сетается undefined, и происходит ошибка
     setMovies(films.results);
     setTotalPages(films.total_pages);
     setActivePage(films.page);
@@ -79,27 +132,12 @@ const MoviesPage: React.FC = () => {
 
   const fetchGenres = async (): Promise<void> => {
     const res = await fetch('/api/genres');
-
     const tmdbGenresResponse: TMDBGenresResponse = await res.json();
     const genres: Genres = tmdbGenresResponse.genres;
-
     const { mapByName, mapById }: GenreMaps = createGenreMaps(genres);
-
     setGenresMapByName(mapByName);
     setGenresMapById(mapById);
   };
-
-  useEffect(() => {
-    fetchGenres();
-  }, []);
-
-  useEffect(() => {
-    if (initialRender.current) {
-      initialRender.current = false;
-    } else {
-      fetchMovies(1);
-    }
-  }, [genresMapByName]);
 
   const genreKeys = useMemo(
     () => (genresMapByName ? Object.keys(genresMapByName) : []),
@@ -114,6 +152,17 @@ const MoviesPage: React.FC = () => {
       genreNames: movie.genre_ids.map(id => genresMapById?.[id] || ''),
     }));
   }, [movies, genresMapById]);
+
+  const handlePageChange = (page: number): void => {
+    const url =
+      `/movies/page/${page}` +
+      `?genres=${selectedGenres.join(',')}` +
+      `&release_year=${selectedReleaseYear.value}` +
+      `&min_rating=${selectedMinRating.value}` +
+      `&max_rating=${selectedMaxRating.value}` +
+      `&sorting_pattern=${selectedSortingPattern.value}`;
+    router.push(url);
+  };
 
   return (
     <>
@@ -152,7 +201,6 @@ const MoviesPage: React.FC = () => {
         value={selectedSortingPattern.value}
         onChange={(_, option): void => setSelectedSortingPattern(option)}
       />
-      <Button onClick={(): Promise<void> => fetchMovies(1)}>CLICK</Button>
       <Container>
         <Grid>
           {mappedMovies.map((movie, index) => (
@@ -162,7 +210,7 @@ const MoviesPage: React.FC = () => {
           ))}
         </Grid>
       </Container>
-      <Pagination total={totalPages} value={activePage} onChange={fetchMovies} mt="sm" />
+      <Pagination total={totalPages} value={activePage} onChange={handlePageChange} mt="sm" />
     </>
   );
 };

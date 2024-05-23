@@ -16,7 +16,7 @@ const AppWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       padding="md"
     >
       <AppShell.Navbar p="md" style={{ position: 'absolute', backgroundColor: 'yellow' }}>
-        <Link href="/movies">Movies</Link>
+        <Link href="/movies/page/1">Movies</Link>
         <Link href="/rated-movies/1">Rated Movies</Link>
       </AppShell.Navbar>
 

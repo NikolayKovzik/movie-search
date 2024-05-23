@@ -8,9 +8,9 @@ import { DetailedMovie, StoredRatedMovies } from '@/types';
 import { getMoviesFromLocalStorage } from '@/utils/local-storage-handlers';
 import { ITEMS_PER_PAGE } from '@/utils/constants';
 
-const RatedMoviesPage: React.FC<{ params: { page: string } }> = ({ params }) => {
+const RatedMoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) => {
   const router = useRouter();
-  const pageFromUrl = parseInt(params.page) || 1;
+  const pageFromUrl = parseInt(params.pageNumber) || 1;
   //! Otherwise, redirect to notfound.
 
   const [ratedMovies, setRatedMovies] = useState<DetailedMovie[]>([]);
@@ -35,12 +35,6 @@ const RatedMoviesPage: React.FC<{ params: { page: string } }> = ({ params }) => 
     fetchRatedMovies();
   }, []);
 
-  useEffect(() => {
-    if (activePage !== pageFromUrl) {
-      router.push(`/rated-movies/${activePage}`);
-    }
-  }, [activePage]);
-
   const calcDisplayedMovies = (): DetailedMovie[] => {
     return ratedMovies.slice((activePage - 1) * ITEMS_PER_PAGE, activePage * ITEMS_PER_PAGE);
   };
@@ -58,7 +52,7 @@ const RatedMoviesPage: React.FC<{ params: { page: string } }> = ({ params }) => 
   };
 
   const changePage = (page: number): void => {
-    setActivePage(page);
+    router.push(`/rated-movies/${page}`);
   };
 
   const displayedMovies = useMemo(calcDisplayedMovies, [ratedMovies, activePage]);
