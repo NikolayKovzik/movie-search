@@ -1,20 +1,17 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Container, Grid, Select, ComboboxItem, MultiSelect, Pagination } from '@mantine/core';
-import FilmCard from '@/components/FilmCard/FilmCard';
 import {
-  currentYear,
-  defaultGenres,
-  defaultMaxRating,
-  defaultMinRating,
-  defaultReleaseYear,
-  defaultSortingPattern,
-  ratings,
-  sortingPatterns,
-  startYear,
-} from '@/utils/constants';
+  Container,
+  Select,
+  ComboboxItem,
+  MultiSelect,
+  Pagination,
+  Button,
+  Grid,
+} from '@mantine/core';
+import { currentYear, ratings, sortingPatterns, startYear } from '@/utils/constants';
 import { generateDataRange } from '@/utils/generate-range';
 import {
   GenresMapByName,
@@ -27,42 +24,43 @@ import {
 } from '@/types';
 import { convertGenresToQueryParam } from '@/utils/convert-genres';
 import { createGenreMaps } from '@/utils/create-genre-maps';
+import FilmCard from '@/components/FilmCard/FilmCard';
 
 const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const urlGenres = searchParams.get('genres')?.split(',');
-  const urlReleaseYear = searchParams.get('release_year');
-  const urlMinRating = searchParams.get('min_rating');
-  const urlMaxRating = searchParams.get('max_rating');
-  const urlSortingPattern = searchParams.get('sorting_pattern');
+  const urlGenres = searchParams.get('with_genres')?.split(',');
+  const urlReleaseYear = searchParams.get('primary_release_year');
+  const urlMinRating = searchParams.get('vote_average.gte');
+  const urlMaxRating = searchParams.get('vote_average.lte');
+  const urlSortingPattern = searchParams.get('sort_by');
 
-  const initialGenres = urlGenres && urlGenres.length ? urlGenres : defaultGenres;
+  const initialGenres = urlGenres && urlGenres.length ? urlGenres : undefined;
   const initialReleaseYear = urlReleaseYear
     ? {
         value: urlReleaseYear,
         label: urlReleaseYear,
       }
-    : defaultReleaseYear;
+    : null;
   const initialMinRating = urlMinRating
     ? {
         value: urlMinRating,
         label: urlMinRating,
       }
-    : defaultMinRating;
+    : null;
   const initialMaxRating = urlMaxRating
     ? {
         value: urlMaxRating,
         label: urlMaxRating,
       }
-    : defaultMaxRating;
+    : null;
   const initialSortingPattern = urlSortingPattern
     ? {
         value: urlSortingPattern,
         label: sortingPatterns.find(item => item.value === urlSortingPattern)?.label as string, //!
       }
-    : defaultSortingPattern;
+    : null;
 
   const currentPage = parseInt(params.pageNumber) || 1;
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -70,36 +68,57 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
   const [activePage, setActivePage] = useState<number>(currentPage);
   const [genresMapByName, setGenresMapByName] = useState<GenresMapByName | null>(null); //! Bidirectional?
   const [genresMapById, setGenresMapById] = useState<GenresMapById | null>(null);
+  const [selectedGenres, setSelectedGenres] = useState<string[] | undefined>(initialGenres);
+  const [selectedReleaseYear, setSelectedReleaseYear] = useState<ComboboxItem | null>(
+    initialReleaseYear
+  );
+  const [selectedMinRating, setSelectedMinRating] = useState<ComboboxItem | null>(initialMinRating);
+  const [selectedMaxRating, setSelectedMaxRating] = useState<ComboboxItem | null>(initialMaxRating);
+  const [selectedSortingPattern, setSelectedSortingPattern] = useState<ComboboxItem | null>(
+    initialSortingPattern
+  );
 
-  const [selectedGenres, setSelectedGenres] = useState<string[]>(initialGenres);
-  const [selectedReleaseYear, setSelectedReleaseYear] = useState<ComboboxItem>(initialReleaseYear);
-  const [selectedMinRating, setSelectedMinRating] = useState<ComboboxItem>(initialMinRating);
-  const [selectedMaxRating, setSelectedMaxRating] = useState<ComboboxItem>(initialMaxRating);
-  const [selectedSortingPattern, setSelectedSortingPattern] =
-    useState<ComboboxItem>(initialSortingPattern);
+  const initialRender = useRef(true); //! any better way?
 
   useEffect(() => {
     fetchGenres();
   }, []);
 
   useEffect(() => {
-    router.replace(
-      `/movies/page/${currentPage}` +
-        `?genres=${selectedGenres.join(',')}` +
-        `&release_year=${selectedReleaseYear.value}` +
-        `&min_rating=${selectedMinRating.value}` +
-        `&max_rating=${selectedMaxRating.value}` +
-        `&sorting_pattern=${selectedSortingPattern.value}`
-    );
+    console.log('initialRender.current: ', initialRender.current);
+    if (initialRender.current) {
+      initialRender.current = false;
+    } else {
+      let url = `/movies/page/${currentPage}?`;
+      if (selectedGenres) {
+        url += `&with_genres=${selectedGenres.join(',')}`;
+      }
+      if (selectedReleaseYear) {
+        url += `&primary_release_year=${selectedReleaseYear.value}`;
+      }
+      if (selectedMinRating) {
+        url += `&vote_average.gte=${selectedMinRating.value}`;
+      }
+      if (selectedMaxRating) {
+        url += `&vote_average.lte=${selectedMaxRating.value}`;
+      }
+      if (selectedSortingPattern) {
+        url += `&sort_by=${selectedSortingPattern.value}`;
+      }
+
+      router.refresh();
+      router.push(url);
+    }
   }, [
     selectedGenres,
-    selectedMaxRating.value,
-    selectedMinRating.value,
-    selectedReleaseYear.value,
-    selectedSortingPattern.value,
+    selectedMaxRating,
+    selectedMinRating,
+    selectedReleaseYear,
+    selectedSortingPattern,
   ]);
 
   useEffect(() => {
+    console.log('FETCH MOVIES');
     fetchMovies(currentPage);
   }, [currentPage, genresMapByName]);
 
@@ -109,15 +128,27 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
       return; //!
     }
 
-    const genreQueryParam = convertGenresToQueryParam(selectedGenres, genresMapByName);
+    const genreQueryParam = selectedGenres
+      ? convertGenresToQueryParam(selectedGenres, genresMapByName)
+      : [];
 
-    const url =
-      `/api/movies?sort_by=${selectedSortingPattern.value}` +
-      `&genres=${genreQueryParam}` +
-      `&release_year=${selectedReleaseYear.value}` +
-      `&vote_average_gte=${selectedMinRating.value}` +
-      `&vote_average_lte=${selectedMaxRating.value}` +
-      `&page=${pageNumber}`;
+    let url = `/api/movies?page=${pageNumber}`;
+
+    if (selectedGenres) {
+      url += `&with_genres=${genreQueryParam}`;
+    }
+    if (selectedReleaseYear) {
+      url += `&primary_release_year=${selectedReleaseYear.value}`;
+    }
+    if (selectedMinRating) {
+      url += `&vote_average.gte=${selectedMinRating.value}`;
+    }
+    if (selectedMaxRating) {
+      url += `&vote_average.lte=${selectedMaxRating.value}`;
+    }
+    if (selectedSortingPattern) {
+      url += `&sort_by=${selectedSortingPattern.value}`;
+    }
 
     console.log('CLIENT MOVIES LINK, :  ', url);
     const res = await fetch(url);
@@ -153,64 +184,87 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
     }));
   }, [movies, genresMapById]);
 
-  const handlePageChange = (page: number): void => {
-    const url =
-      `/movies/page/${page}` +
-      `?genres=${selectedGenres.join(',')}` +
-      `&release_year=${selectedReleaseYear.value}` +
-      `&min_rating=${selectedMinRating.value}` +
-      `&max_rating=${selectedMaxRating.value}` +
-      `&sorting_pattern=${selectedSortingPattern.value}`;
+  const changePage = (page: number): void => {
+    let url = `/movies/page/${page}?language=en-US`;
+    if (selectedGenres) {
+      url += `&with_genres=${selectedGenres.join(',')}`;
+    }
+    if (selectedReleaseYear) {
+      url += `&primary_release_year=${selectedReleaseYear.value}`;
+    }
+    if (selectedMinRating) {
+      url += `&vote_average.gte=${selectedMinRating.value}`;
+    }
+    if (selectedMaxRating) {
+      url += `&vote_average.lte=${selectedMaxRating.value}`;
+    }
+    if (selectedSortingPattern) {
+      url += `&sort_by=${selectedSortingPattern.value}`;
+    }
     router.push(url);
+  };
+
+  const resetFilters = (): void => {
+    setSelectedGenres(undefined);
+    setSelectedReleaseYear(null);
+    setSelectedMinRating(null);
+    setSelectedMaxRating(null);
+    setSelectedSortingPattern(null);
+    changePage(1);
   };
 
   return (
     <>
-      <MultiSelect
-        label="Genres"
-        placeholder="Select genres"
-        data={genresMapByName ? genreKeys : []}
-        value={selectedGenres}
-        onChange={setSelectedGenres}
-      />
-      <Select
-        label="Release year"
-        placeholder="Select release year"
-        data={generateDataRange(currentYear, startYear)}
-        value={selectedReleaseYear.value}
-        onChange={(_, option): void => setSelectedReleaseYear(option)}
-      />
-      <Select
-        label="Select Minimum Rating"
-        placeholder="From"
-        data={ratings}
-        value={selectedMinRating.value}
-        onChange={(_, option): void => setSelectedMinRating(option)}
-      />
-      <Select
-        label="Select Maximum Rating"
-        placeholder="To"
-        data={ratings}
-        value={selectedMaxRating.value}
-        onChange={(_, option): void => setSelectedMaxRating(option)}
-      />
-      <Select
-        label="Sort by"
-        placeholder="REPLACE BY DEFAULT VALUE"
-        data={sortingPatterns}
-        value={selectedSortingPattern.value}
-        onChange={(_, option): void => setSelectedSortingPattern(option)}
-      />
       <Container>
-        <Grid>
-          {mappedMovies.map((movie, index) => (
-            <Grid.Col span={6} key={index}>
-              <FilmCard movie={movie} genres={movie.genreNames} />
-            </Grid.Col>
-          ))}
-        </Grid>
+        <MultiSelect
+          label="Genres"
+          placeholder="Select genres"
+          data={genresMapByName ? genreKeys : []}
+          value={selectedGenres}
+          onChange={setSelectedGenres}
+        />
+        <Select
+          label="Release year"
+          placeholder="Select release year"
+          data={generateDataRange(currentYear, startYear)}
+          value={selectedReleaseYear?.value}
+          onChange={(_, option): void => setSelectedReleaseYear(option)}
+        />
+        <Select
+          label="Select Minimum Rating"
+          placeholder="From"
+          data={ratings}
+          value={selectedMinRating?.value}
+          onChange={(_, option): void => setSelectedMinRating(option)}
+        />
+        <Select
+          label="Select Maximum Rating"
+          placeholder="To"
+          data={ratings}
+          value={selectedMaxRating?.value}
+          onChange={(_, option): void => setSelectedMaxRating(option)}
+        />
+        <Select
+          label="Sort by"
+          placeholder="REPLACE BY DEFAULT VALUE"
+          data={sortingPatterns}
+          value={selectedSortingPattern?.value}
+          onChange={(_, option): void => setSelectedSortingPattern(option)}
+        />
+        <Button onClick={resetFilters} mt="sm">
+          RESET FILTERS
+        </Button>
+        <Container>
+          <Grid>
+            {mappedMovies.map((movie, index) => (
+              <Grid.Col span={6} key={index}>
+                <FilmCard movie={movie} genres={movie.genreNames} />
+              </Grid.Col>
+            ))}
+          </Grid>
+        </Container>
       </Container>
-      <Pagination total={totalPages} value={activePage} onChange={handlePageChange} mt="sm" />
+      <Pagination total={totalPages} value={activePage} onChange={changePage} mt="sm" />
     </>
   );
 };

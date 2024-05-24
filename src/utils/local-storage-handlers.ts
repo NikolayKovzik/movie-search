@@ -1,4 +1,4 @@
-import { StoredMovieRating } from '@/types';
+import { StoredRatedMovies } from '@/types';
 import { RATED_MOVIES_STORAGE_KEY } from './constants';
 
 export function saveMovieToLocalStorage(movieId: number, userRating: number): void {
@@ -13,6 +13,6 @@ export function removeMovieFromLocalStorage(movieId: number): void {
   localStorage.setItem(RATED_MOVIES_STORAGE_KEY, JSON.stringify(ratedMovies));
 }
 
-export function getMoviesFromLocalStorage(): StoredMovieRating {
+export function getMoviesFromLocalStorage(): StoredRatedMovies {
   return JSON.parse(localStorage.getItem(RATED_MOVIES_STORAGE_KEY) || '{}');
 }

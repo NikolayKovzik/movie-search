@@ -51,7 +51,7 @@ const RatedMoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params 
     }
   };
 
-  const changePage = (page: number): void => {
+  const goToPage = (page: number): void => {
     router.push(`/rated-movies/${page}`);
   };
 
@@ -73,7 +73,7 @@ const RatedMoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params 
           ))}
         </Grid>
       </Container>
-      <Pagination total={totalPages} value={activePage} onChange={changePage} mt="20" />
+      <Pagination total={totalPages} value={activePage} onChange={goToPage} mt="20" />
     </>
   );
 };

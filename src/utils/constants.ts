@@ -40,12 +40,6 @@ export const sortingPatterns = [
   { value: 'vote_count.asc', label: 'Lowest vote count' },
 ] as const;
 
-export const defaultGenres = ['Action', 'Comedy', 'Thriller'];
-export const defaultReleaseYear = { value: `${currentYear}`, label: `${currentYear}` };
-export const defaultSortingPattern = { value: 'popularity.desc', label: 'Most popular' };
-export const defaultMinRating = { value: '7', label: '7' };
-export const defaultMaxRating = { value: '10', label: '10' };
-
 export const RATED_MOVIES_STORAGE_KEY = 'tmdb_user_ratings';
 
 export const ITEMS_PER_PAGE = 4;
