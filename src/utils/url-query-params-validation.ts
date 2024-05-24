@@ -29,16 +29,16 @@ export function validateReleaseYear(value: number): boolean {
   return false;
 }
 
-export function validateVoteAverageUpperLimit(gteValue: number, lteValue: number): boolean {
+export function validateVoteAverageLTE(lteValue: number): boolean {
   if (lteValue) {
-    return Number.isInteger(lteValue) && gteValue <= lteValue;
+    return Number.isInteger(lteValue) && lteValue >= 0 && lteValue <= 10;
   }
   return false;
 }
 
-export function validateVoteAverageBottomLimit(gteValue: number, lteValue: number): boolean {
+export function validateVoteAverageGTE(gteValue: number): boolean {
   if (gteValue) {
-    return Number.isInteger(gteValue) && gteValue <= lteValue;
+    return Number.isInteger(gteValue) && gteValue >= 0 && gteValue <= 10;
   }
   return false;
 }
