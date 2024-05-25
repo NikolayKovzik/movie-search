@@ -11,8 +11,7 @@ import {
   Button,
   Grid,
 } from '@mantine/core';
-import { currentYear, ratings, sortingPatterns, startYear } from '@/utils/constants';
-import { generateDataRange } from '@/utils/generate-range';
+import { ratingOptions, sortingOptions, yearOptions } from '@/utils/constants';
 import {
   GenresMapByName,
   Genres,
@@ -21,10 +20,12 @@ import {
   GenresMapById,
   GenreMaps,
   TMDBMoviesResponse,
+  SortingPattern,
 } from '@/types';
 import { convertGenresToQueryParam } from '@/utils/convert-genres';
 import { createGenreMaps } from '@/utils/create-genre-maps';
 import FilmCard from '@/components/FilmCard/FilmCard';
+import { calcInitialSelectValue } from '@/utils/init-helpers';
 
 const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) => {
   const router = useRouter();
@@ -34,33 +35,13 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
   const urlReleaseYear = searchParams.get('primary_release_year');
   const urlMinRating = searchParams.get('vote_average.gte');
   const urlMaxRating = searchParams.get('vote_average.lte');
-  const urlSortingPattern = searchParams.get('sort_by');
+  const urlSortingPattern = searchParams.get('sort_by') as SortingPattern | null;
 
-  const initialGenres = urlGenres && urlGenres.length ? urlGenres : undefined;
-  const initialReleaseYear = urlReleaseYear
-    ? {
-        value: urlReleaseYear,
-        label: urlReleaseYear,
-      }
-    : null;
-  const initialMinRating = urlMinRating
-    ? {
-        value: urlMinRating,
-        label: urlMinRating,
-      }
-    : null;
-  const initialMaxRating = urlMaxRating
-    ? {
-        value: urlMaxRating,
-        label: urlMaxRating,
-      }
-    : null;
-  const initialSortingPattern = urlSortingPattern
-    ? {
-        value: urlSortingPattern,
-        label: sortingPatterns.find(item => item.value === urlSortingPattern)?.label as string, //!
-      }
-    : null;
+  const initialGenres = urlGenres && urlGenres.length ? urlGenres : [];
+  const initialReleaseYear = calcInitialSelectValue(urlReleaseYear);
+  const initialMinRating = calcInitialSelectValue(urlMinRating);
+  const initialMaxRating = calcInitialSelectValue(urlMaxRating);
+  const initialSortingPattern = calcInitialSelectValue(urlSortingPattern, true);
 
   const currentPage = parseInt(params.pageNumber) || 1;
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -68,7 +49,7 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
   const [activePage, setActivePage] = useState<number>(currentPage);
   const [genresMapByName, setGenresMapByName] = useState<GenresMapByName | null>(null); //! Bidirectional?
   const [genresMapById, setGenresMapById] = useState<GenresMapById | null>(null);
-  const [selectedGenres, setSelectedGenres] = useState<string[] | undefined>(initialGenres);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>(initialGenres);
   const [selectedReleaseYear, setSelectedReleaseYear] = useState<ComboboxItem | null>(
     initialReleaseYear
   );
@@ -169,7 +150,7 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
     setGenresMapById(mapById);
   };
 
-  const genreKeys = useMemo(
+  const genreOptions = useMemo(
     () => (genresMapByName ? Object.keys(genresMapByName) : []),
     [genresMapByName]
   );
@@ -220,35 +201,35 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
         <MultiSelect
           label="Genres"
           placeholder="Select genres"
-          data={genresMapByName ? genreKeys : []}
+          data={genresMapByName ? genreOptions : []}
           value={selectedGenres}
           onChange={setSelectedGenres}
         />
         <Select
           label="Release year"
           placeholder="Select release year"
-          data={generateDataRange(currentYear, startYear)}
+          data={yearOptions}
           value={selectedReleaseYear?.value}
           onChange={(_, option): void => setSelectedReleaseYear(option)}
         />
         <Select
           label="Select Minimum Rating"
           placeholder="From"
-          data={ratings}
+          data={ratingOptions}
           value={selectedMinRating?.value}
           onChange={(_, option): void => setSelectedMinRating(option)}
         />
         <Select
           label="Select Maximum Rating"
           placeholder="To"
-          data={ratings}
+          data={ratingOptions}
           value={selectedMaxRating?.value}
           onChange={(_, option): void => setSelectedMaxRating(option)}
         />
         <Select
           label="Sort by"
           placeholder="REPLACE BY DEFAULT VALUE"
-          data={sortingPatterns}
+          data={sortingOptions}
           value={selectedSortingPattern?.value}
           onChange={(_, option): void => setSelectedSortingPattern(option)}
         />

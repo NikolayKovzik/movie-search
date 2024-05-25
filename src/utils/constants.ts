@@ -1,3 +1,5 @@
+import { generateSortingOptions, generateNumericOptions } from './select-data-generators';
+
 export const validSortingTypes = [
   'popularity',
   'original_title',
@@ -7,39 +9,29 @@ export const validSortingTypes = [
   'vote_count',
 ] as const;
 
-export const startYear = 1880;
+export const startYear = 1888;
 
 export const currentYear = new Date().getFullYear();
 
-export const ratings = [
-  //генератор из массива 1-10?
-  { value: '10', label: '10' },
-  { value: '9', label: '9' },
-  { value: '8', label: '8' },
-  { value: '7', label: '7' },
-  { value: '6', label: '6' },
-  { value: '5', label: '5' },
-  { value: '4', label: '4' },
-  { value: '3', label: '3' },
-  { value: '2', label: '2' },
-  { value: '1', label: '1' },
-] as const;
+export const sortingPatternsMap = {
+  ['popularity.desc']: 'Most popular',
+  ['popularity.asc']: 'Least popular',
+  ['original_title.desc']: 'Alphabetical order',
+  ['original_title.asc']: 'Reverse alphabetical order',
+  ['revenue.desc']: 'Highest revenue',
+  ['revenue.asc']: 'Lowest revenue',
+  ['primary_release_date.desc']: 'Latest release date',
+  ['primary_release_date.asc']: 'Earliest release date',
+  ['vote_average.desc']: 'Highest average score',
+  ['vote_average.asc']: 'Lowest average score',
+  ['vote_count.desc']: 'Highest vote count',
+  ['vote_count.asc']: 'Lowest vote count',
+};
 
-export const sortingPatterns = [
-  { value: 'popularity.desc', label: 'Most popular' },
-  { value: 'popularity.asc', label: 'Least popular' },
-  { value: 'original_title.desc', label: 'Alphabetical order' },
-  { value: 'original_title.asc', label: 'Reverse alphabetical order' },
-  { value: 'revenue.desc', label: 'Highest revenue' },
-  { value: 'revenue.asc', label: 'Lowest revenue' },
-  { value: 'primary_release_date.desc', label: 'Latest release date' },
-  { value: 'primary_release_date.asc', label: 'Earliest release date' },
-  { value: 'vote_average.desc', label: 'Highest average score' },
-  { value: 'vote_average.asc', label: 'Lowest average score' },
-  { value: 'vote_count.desc', label: 'Highest vote count' },
-  { value: 'vote_count.asc', label: 'Lowest vote count' },
-] as const;
+export const sortingOptions = generateSortingOptions(sortingPatternsMap);
 
-export const RATED_MOVIES_STORAGE_KEY = 'tmdb_user_ratings';
+export const yearOptions = generateNumericOptions(currentYear, startYear);
+
+export const ratingOptions = generateNumericOptions(10, 0);
 
 export const ITEMS_PER_PAGE = 4;

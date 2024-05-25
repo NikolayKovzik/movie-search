@@ -1,3 +1,5 @@
+import { sortingPatternsMap } from '@/utils/constants';
+
 export type SortingType =
   | 'popularity'
   | 'original_title'
@@ -130,3 +132,7 @@ export type ErrorResponse = {
 export type StoredRatedMovies = {
   [id: string]: number;
 };
+
+export type SortingPattern = keyof typeof sortingPatternsMap;
+
+export type SortingPatternsMap = typeof sortingPatternsMap;

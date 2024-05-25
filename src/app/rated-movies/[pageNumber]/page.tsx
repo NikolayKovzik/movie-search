@@ -28,7 +28,7 @@ const RatedMoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params 
     );
 
     setRatedMovies(movies);
-    setTotalPages(Math.ceil(movies.length / ITEMS_PER_PAGE));
+    setTotalPages(Math.ceil(movies.length / ITEMS_PER_PAGE)); //! Move it under the fetchRatedMovies call?
   };
 
   useEffect(() => {
@@ -52,7 +52,7 @@ const RatedMoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params 
   };
 
   const goToPage = (page: number): void => {
-    router.push(`/rated-movies/${page}`);
+    router.push(`/rated-movies/${page}`); //! replace?
   };
 
   const displayedMovies = useMemo(calcDisplayedMovies, [ratedMovies, activePage]);
