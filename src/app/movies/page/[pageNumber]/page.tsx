@@ -105,9 +105,10 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
       if (selectedSortingPattern) {
         url += `&sort_by=${selectedSortingPattern.value}`;
       }
+      console.log('URL ON PUSH: ', url);
 
-      router.refresh();
-      router.push(url);
+      fetchMovies(1);
+      router.replace(url);
     }
   }, [
     selectedGenres,
