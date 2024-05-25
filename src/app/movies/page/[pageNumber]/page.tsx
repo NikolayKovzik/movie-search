@@ -85,12 +85,11 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
   }, []);
 
   useEffect(() => {
-    console.log('initialRender.current: ', initialRender.current);
     if (initialRender.current) {
       initialRender.current = false;
     } else {
       let url = `/movies/page/${currentPage}?`;
-      if (selectedGenres) {
+      if (selectedGenres && selectedGenres.length) {
         url += `&with_genres=${selectedGenres.join(',')}`;
       }
       if (selectedReleaseYear) {
@@ -105,7 +104,6 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
       if (selectedSortingPattern) {
         url += `&sort_by=${selectedSortingPattern.value}`;
       }
-      console.log('URL ON PUSH: ', url);
 
       fetchMovies(1);
       router.replace(url);
@@ -135,7 +133,7 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
 
     let url = `/api/movies?page=${pageNumber}`;
 
-    if (selectedGenres) {
+    if (selectedGenres && selectedGenres.length) {
       url += `&with_genres=${genreQueryParam}`;
     }
     if (selectedReleaseYear) {
@@ -187,7 +185,7 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
 
   const changePage = (page: number): void => {
     let url = `/movies/page/${page}?language=en-US`;
-    if (selectedGenres) {
+    if (selectedGenres && selectedGenres.length) {
       url += `&with_genres=${selectedGenres.join(',')}`;
     }
     if (selectedReleaseYear) {
@@ -202,11 +200,13 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
     if (selectedSortingPattern) {
       url += `&sort_by=${selectedSortingPattern.value}`;
     }
-    router.push(url);
+    fetchMovies(1);
+    router.replace(url);
+    //router.push(1)
   };
 
   const resetFilters = (): void => {
-    setSelectedGenres(undefined);
+    setSelectedGenres([]);
     setSelectedReleaseYear(null);
     setSelectedMinRating(null);
     setSelectedMaxRating(null);
