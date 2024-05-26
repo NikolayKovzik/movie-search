@@ -27,11 +27,46 @@ import { createGenreMaps } from '@/utils/create-genre-maps';
 import FilmCard from '@/components/FilmCard/FilmCard';
 import { calcInitialSelectValue } from '@/utils/init-helpers';
 
+//! перегрузка функции
+function buildURL(
+  baseURL: string,
+  genres: string[],
+  releaseYear: ComboboxItem | null,
+  minRating: ComboboxItem | null,
+  maxRating: ComboboxItem | null,
+  sortingPattern: ComboboxItem | null,
+  isApiRequest: boolean = false,
+  genresMapByName?: GenresMapByName
+): string {
+  let resultingURL = baseURL;
+  if (genres && genres.length) {
+    if (isApiRequest && genresMapByName) {
+      const genreQueryParam = convertGenresToQueryParam(genres, genresMapByName);
+      resultingURL += `&with_genres=${genreQueryParam}`;
+    } else {
+      resultingURL += `&with_genres=${genres.join('|')}`;
+    }
+  }
+  if (releaseYear) {
+    resultingURL += `&primary_release_year=${releaseYear.value}`;
+  }
+  if (minRating) {
+    resultingURL += `&vote_average.gte=${minRating.value}`;
+  }
+  if (maxRating) {
+    resultingURL += `&vote_average.lte=${maxRating.value}`;
+  }
+  if (sortingPattern) {
+    resultingURL += `&sort_by=${sortingPattern.value}`;
+  }
+  return resultingURL;
+}
+
 const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const urlGenres = searchParams.get('with_genres')?.split(',');
+  const urlGenres = searchParams.get('with_genres')?.split('|');
   const urlReleaseYear = searchParams.get('primary_release_year');
   const urlMinRating = searchParams.get('vote_average.gte');
   const urlMaxRating = searchParams.get('vote_average.lte');
@@ -69,25 +104,19 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
     if (initialRender.current) {
       initialRender.current = false;
     } else {
-      let url = `/movies/page/${currentPage}?`;
-      if (selectedGenres && selectedGenres.length) {
-        url += `&with_genres=${selectedGenres.join(',')}`;
-      }
-      if (selectedReleaseYear) {
-        url += `&primary_release_year=${selectedReleaseYear.value}`;
-      }
-      if (selectedMinRating) {
-        url += `&vote_average.gte=${selectedMinRating.value}`;
-      }
-      if (selectedMaxRating) {
-        url += `&vote_average.lte=${selectedMaxRating.value}`;
-      }
-      if (selectedSortingPattern) {
-        url += `&sort_by=${selectedSortingPattern.value}`;
-      }
+      const baseURL = `/movies/page/${currentPage}?language=en-US`;
+      const finalURL = buildURL(
+        baseURL,
+        selectedGenres,
+        selectedReleaseYear,
+        selectedMinRating,
+        selectedMaxRating,
+        selectedSortingPattern,
+        false
+      );
 
       fetchMovies(1);
-      router.replace(url);
+      router.replace(finalURL);
     }
   }, [
     selectedGenres,
@@ -108,30 +137,20 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
       return; //!
     }
 
-    const genreQueryParam = selectedGenres
-      ? convertGenresToQueryParam(selectedGenres, genresMapByName)
-      : [];
+    const baseURL = `/api/movies?page=${pageNumber}`;
+    const finalURL = buildURL(
+      baseURL,
+      selectedGenres,
+      selectedReleaseYear,
+      selectedMinRating,
+      selectedMaxRating,
+      selectedSortingPattern,
+      true,
+      genresMapByName
+    );
 
-    let url = `/api/movies?page=${pageNumber}`;
-
-    if (selectedGenres && selectedGenres.length) {
-      url += `&with_genres=${genreQueryParam}`;
-    }
-    if (selectedReleaseYear) {
-      url += `&primary_release_year=${selectedReleaseYear.value}`;
-    }
-    if (selectedMinRating) {
-      url += `&vote_average.gte=${selectedMinRating.value}`;
-    }
-    if (selectedMaxRating) {
-      url += `&vote_average.lte=${selectedMaxRating.value}`;
-    }
-    if (selectedSortingPattern) {
-      url += `&sort_by=${selectedSortingPattern.value}`;
-    }
-
-    console.log('CLIENT MOVIES LINK, :  ', url);
-    const res = await fetch(url);
+    console.log('CLIENT MOVIES LINK, :  ', finalURL);
+    const res = await fetch(finalURL);
 
     const films: TMDBMoviesResponse = await res.json();
     //! если ошибка запроса (например рейтинг gte > lte), то сетается undefined, и происходит ошибка
@@ -165,24 +184,19 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
   }, [movies, genresMapById]);
 
   const changePage = (page: number): void => {
-    let url = `/movies/page/${page}?language=en-US`;
-    if (selectedGenres && selectedGenres.length) {
-      url += `&with_genres=${selectedGenres.join(',')}`;
-    }
-    if (selectedReleaseYear) {
-      url += `&primary_release_year=${selectedReleaseYear.value}`;
-    }
-    if (selectedMinRating) {
-      url += `&vote_average.gte=${selectedMinRating.value}`;
-    }
-    if (selectedMaxRating) {
-      url += `&vote_average.lte=${selectedMaxRating.value}`;
-    }
-    if (selectedSortingPattern) {
-      url += `&sort_by=${selectedSortingPattern.value}`;
-    }
+    const baseURL = `/movies/page/${page}?language=en-US`;
+    const finalURL = buildURL(
+      baseURL,
+      selectedGenres,
+      selectedReleaseYear,
+      selectedMinRating,
+      selectedMaxRating,
+      selectedSortingPattern,
+      false
+    );
+
     fetchMovies(1);
-    router.replace(url);
+    router.replace(finalURL);
     //router.push(1)
   };
 
