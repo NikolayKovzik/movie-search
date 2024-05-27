@@ -20,65 +20,47 @@ import {
   GenresMapById,
   GenreMaps,
   TMDBMoviesResponse,
-  SortingPattern,
 } from '@/types';
-import { convertGenresToQueryParam } from '@/utils/convert-genres';
 import { createGenreMaps } from '@/utils/create-genre-maps';
 import FilmCard from '@/components/FilmCard/FilmCard';
-import { calcInitialSelectValue } from '@/utils/init-helpers';
-
-//! перегрузка функции
-function buildURL(
-  baseURL: string,
-  genres: string[],
-  releaseYear: ComboboxItem | null,
-  minRating: ComboboxItem | null,
-  maxRating: ComboboxItem | null,
-  sortingPattern: ComboboxItem | null,
-  isApiRequest: boolean = false,
-  genresMapByName?: GenresMapByName
-): string {
-  let resultingURL = baseURL;
-  if (genres && genres.length) {
-    if (isApiRequest && genresMapByName) {
-      const genreQueryParam = convertGenresToQueryParam(genres, genresMapByName);
-      resultingURL += `&with_genres=${genreQueryParam}`;
-    } else {
-      resultingURL += `&with_genres=${genres.join('|')}`;
-    }
-  }
-  if (releaseYear) {
-    resultingURL += `&primary_release_year=${releaseYear.value}`;
-  }
-  if (minRating) {
-    resultingURL += `&vote_average.gte=${minRating.value}`;
-  }
-  if (maxRating) {
-    resultingURL += `&vote_average.lte=${maxRating.value}`;
-  }
-  if (sortingPattern) {
-    resultingURL += `&sort_by=${sortingPattern.value}`;
-  }
-  return resultingURL;
-}
+import {
+  calcCurrentPageValue,
+  calcInitialGenresValue,
+  calcInitialMaxRatingValue,
+  calcInitialMinRatingValue,
+  calcInitialReleaseYearValue,
+  calcInitialSortingPatternValue,
+} from '@/utils/init-helpers';
+import { buildURL } from '@/utils/build-url';
+import {
+  //! move to init-helpers?
+  validateGenreIDs,
+  validateReleaseYear,
+  validateVoteAverageValue,
+  validateSortingPattern,
+  validatePageNumber,
+} from '@/utils/url-query-params-validation';
 
 const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const urlGenres = searchParams.get('with_genres')?.split('|');
-  const urlReleaseYear = searchParams.get('primary_release_year');
-  const urlMinRating = searchParams.get('vote_average.gte');
-  const urlMaxRating = searchParams.get('vote_average.lte');
-  const urlSortingPattern = searchParams.get('sort_by') as SortingPattern | null;
+  const urlGenresValue = searchParams.get('with_genres');
+  const urlReleaseYearValue = searchParams.get('primary_release_year');
+  const urlMinRatingValue = searchParams.get('vote_average.gte');
+  const urlMaxRatingValue = searchParams.get('vote_average.lte');
+  const urlSortingPatternValue = searchParams.get('sort_by');
 
-  const initialGenres = urlGenres && urlGenres.length ? urlGenres : [];
-  const initialReleaseYear = calcInitialSelectValue(urlReleaseYear);
-  const initialMinRating = calcInitialSelectValue(urlMinRating);
-  const initialMaxRating = calcInitialSelectValue(urlMaxRating);
-  const initialSortingPattern = calcInitialSelectValue(urlSortingPattern, true);
+  const initialGenres: string[] = [];
+  const initialReleaseYear = calcInitialReleaseYearValue(urlReleaseYearValue, validateReleaseYear);
+  const initialMinRating = calcInitialMinRatingValue(urlMinRatingValue, validateVoteAverageValue);
+  const initialMaxRating = calcInitialMaxRatingValue(urlMaxRatingValue, validateVoteAverageValue);
+  const initialSortingPattern = calcInitialSortingPatternValue(
+    urlSortingPatternValue,
+    validateSortingPattern
+  );
+  const currentPage = calcCurrentPageValue(params.pageNumber, validatePageNumber);
 
-  const currentPage = parseInt(params.pageNumber) || 1;
   const [movies, setMovies] = useState<Movie[]>([]);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [activePage, setActivePage] = useState<number>(currentPage);
@@ -101,22 +83,32 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
   }, []);
 
   useEffect(() => {
+    const initialGenresValue = calcInitialGenresValue(
+      urlGenresValue,
+      genresMapById,
+      validateGenreIDs
+    );
+
+    setSelectedGenres(initialGenresValue);
+  }, [genresMapById]);
+
+  useEffect(() => {
+    const baseURL = `/movies/page/${currentPage}?language=en-US`;
+    const finalURL = buildURL(
+      baseURL,
+      selectedGenres,
+      selectedReleaseYear,
+      selectedMinRating,
+      selectedMaxRating,
+      selectedSortingPattern,
+      genresMapByName
+    );
+    router.replace(finalURL);
+
     if (initialRender.current) {
       initialRender.current = false;
     } else {
-      const baseURL = `/movies/page/${currentPage}?language=en-US`;
-      const finalURL = buildURL(
-        baseURL,
-        selectedGenres,
-        selectedReleaseYear,
-        selectedMinRating,
-        selectedMaxRating,
-        selectedSortingPattern,
-        false
-      );
-
       fetchMovies(1);
-      router.replace(finalURL);
     }
   }, [
     selectedGenres,
@@ -145,7 +137,6 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
       selectedMinRating,
       selectedMaxRating,
       selectedSortingPattern,
-      true,
       genresMapByName
     );
 
@@ -192,7 +183,7 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
       selectedMinRating,
       selectedMaxRating,
       selectedSortingPattern,
-      false
+      genresMapByName
     );
 
     fetchMovies(1);

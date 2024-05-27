@@ -5,8 +5,7 @@ import {
   validateReleaseYear,
   validateSortingOrder,
   validateSortingType,
-  validateVoteAverageGTE,
-  validateVoteAverageLTE,
+  validateVoteAverageValue,
   validatePageNumber,
 } from '@/utils/url-query-params-validation';
 import { ErrorResponse, TMDBMoviesResponse } from '@/types';
@@ -30,7 +29,7 @@ export async function GET(
 
   let URL = `${baseURL}/discover/movie?language=en-US`;
 
-  if (sortingType !== undefined && sortingType !== null) {
+  if (sortingType) {
     const isValidSortingType = validateSortingType(sortingType);
     if (!isValidSortingType) {
       return NextResponse.json(
@@ -41,7 +40,7 @@ export async function GET(
       );
     } else {
       URL += `&sort_by=${sortingType}`;
-      if (sortingOrder !== undefined && sortingOrder !== null) {
+      if (sortingOrder) {
         const isValidSortingOrder = validateSortingOrder(sortingOrder);
         if (!isValidSortingOrder) {
           return NextResponse.json(
@@ -57,7 +56,7 @@ export async function GET(
     }
   }
 
-  if (genreIDs !== undefined && genreIDs !== null) {
+  if (genreIDs) {
     const isValidGenreIDs = validateGenreIDs(genreIDs);
     if (!isValidGenreIDs) {
       return NextResponse.json(
@@ -71,8 +70,8 @@ export async function GET(
     }
   }
 
-  if (releaseYear !== undefined && releaseYear !== null) {
-    const convertedReleaseYear = Number(searchParams.get('primary_release_year'));
+  if (releaseYear) {
+    const convertedReleaseYear = parseInt(releaseYear);
     const isValidReleaseYear = validateReleaseYear(convertedReleaseYear);
     if (!isValidReleaseYear) {
       return NextResponse.json(
@@ -86,9 +85,9 @@ export async function GET(
     }
   }
 
-  if (voteAverageGTE !== undefined && voteAverageGTE !== null) {
-    const convertedVoteAverageGTE = Number(searchParams.get('vote_average.gte'));
-    const isValidVoteAverageGTE = validateVoteAverageGTE(convertedVoteAverageGTE);
+  if (voteAverageGTE) {
+    const convertedVoteAverageGTE = parseInt(voteAverageGTE);
+    const isValidVoteAverageGTE = validateVoteAverageValue(convertedVoteAverageGTE);
     if (!isValidVoteAverageGTE) {
       return NextResponse.json(
         {
@@ -102,9 +101,9 @@ export async function GET(
     }
   }
 
-  if (voteAverageLTE !== undefined && voteAverageLTE !== null) {
-    const convertedVoteAverageLTE = Number(searchParams.get('vote_average.lte'));
-    const isValidVoteAverageLTE = validateVoteAverageLTE(convertedVoteAverageLTE);
+  if (voteAverageLTE) {
+    const convertedVoteAverageLTE = parseInt(voteAverageLTE);
+    const isValidVoteAverageLTE = validateVoteAverageValue(convertedVoteAverageLTE);
     if (!isValidVoteAverageLTE) {
       return NextResponse.json(
         {
@@ -118,8 +117,8 @@ export async function GET(
     }
   }
 
-  if (page !== undefined && page !== null) {
-    const convertedPage = Number(searchParams.get('page'));
+  if (page) {
+    const convertedPage = parseInt(page);
     const isValidPageNumber = validatePageNumber(convertedPage);
     if (!isValidPageNumber) {
       return NextResponse.json(
