@@ -30,9 +30,3 @@ export function validateVoteAverageValue(value: number): boolean {
 export function validatePageNumber(pageNumber: number): boolean {
   return Number.isInteger(pageNumber) && pageNumber <= 500;
 }
-
-export type ValidateSortingPattern = typeof validateSortingPattern;
-export type ValidateGenreIDs = typeof validateGenreIDs;
-export type ValidateReleaseYear = typeof validateReleaseYear;
-export type ValidateVoteAverageValue = typeof validateVoteAverageValue;
-export type ValidatePageNumber = typeof validatePageNumber;

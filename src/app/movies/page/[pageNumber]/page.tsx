@@ -24,7 +24,7 @@ import {
 import { createGenreMaps } from '@/utils/create-genre-maps';
 import FilmCard from '@/components/FilmCard/FilmCard';
 import {
-  calcCurrentPageValue,
+  calcInitialPageValue,
   calcInitialGenresValue,
   calcInitialMaxRatingValue,
   calcInitialMinRatingValue,
@@ -32,14 +32,6 @@ import {
   calcInitialSortingPatternValue,
 } from '@/utils/init-helpers';
 import { buildURL } from '@/utils/build-url';
-import {
-  //! move to init-helpers?
-  validateGenreIDs,
-  validateReleaseYear,
-  validateVoteAverageValue,
-  validateSortingPattern,
-  validatePageNumber,
-} from '@/utils/url-query-params-validation';
 
 const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) => {
   const router = useRouter();
@@ -52,18 +44,15 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
   const urlSortingPatternValue = searchParams.get('sort_by');
 
   const initialGenres: string[] = [];
-  const initialReleaseYear = calcInitialReleaseYearValue(urlReleaseYearValue, validateReleaseYear);
-  const initialMinRating = calcInitialMinRatingValue(urlMinRatingValue, validateVoteAverageValue);
-  const initialMaxRating = calcInitialMaxRatingValue(urlMaxRatingValue, validateVoteAverageValue);
-  const initialSortingPattern = calcInitialSortingPatternValue(
-    urlSortingPatternValue,
-    validateSortingPattern
-  );
-  const currentPage = calcCurrentPageValue(params.pageNumber, validatePageNumber);
+  const initialReleaseYear = calcInitialReleaseYearValue(urlReleaseYearValue);
+  const initialMinRating = calcInitialMinRatingValue(urlMinRatingValue);
+  const initialMaxRating = calcInitialMaxRatingValue(urlMaxRatingValue);
+  const initialSortingPattern = calcInitialSortingPatternValue(urlSortingPatternValue);
+  const initialPage = calcInitialPageValue(params.pageNumber);
 
   const [movies, setMovies] = useState<Movie[]>([]);
   const [totalPages, setTotalPages] = useState<number>(1);
-  const [activePage, setActivePage] = useState<number>(currentPage);
+  const [activePage, setActivePage] = useState<number>(initialPage);
   const [genresMapByName, setGenresMapByName] = useState<GenresMapByName | null>(null); //! Bidirectional?
   const [genresMapById, setGenresMapById] = useState<GenresMapById | null>(null);
   const [selectedGenres, setSelectedGenres] = useState<string[]>(initialGenres);
@@ -79,36 +68,40 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
   const initialRender = useRef(true); //! any better way?
 
   useEffect(() => {
+    console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!page remount!!!!!!!!!!!!!!!!!!!!!!!!!');
     fetchGenres();
   }, []);
 
   useEffect(() => {
-    const initialGenresValue = calcInitialGenresValue(
-      urlGenresValue,
-      genresMapById,
-      validateGenreIDs
-    );
+    console.log(`genresMapById changed: ${genresMapById}; initialRender ${initialRender.current}`);
+    if (!initialRender.current) {
+      const initialGenresValue = calcInitialGenresValue(urlGenresValue, genresMapById);
 
-    setSelectedGenres(initialGenresValue);
+      setSelectedGenres(initialGenresValue);
+    }
   }, [genresMapById]);
 
   useEffect(() => {
-    const baseURL = `/movies/page/${currentPage}?language=en-US`;
-    const finalURL = buildURL(
-      baseURL,
-      selectedGenres,
-      selectedReleaseYear,
-      selectedMinRating,
-      selectedMaxRating,
-      selectedSortingPattern,
-      genresMapByName
+    console.log(
+      `USE EFFECT FOR FILTERS(1)  activePage: ${activePage}   selectedGenres: ${selectedGenres}`
     );
-    router.replace(finalURL);
 
     if (initialRender.current) {
       initialRender.current = false;
     } else {
-      fetchMovies(1);
+      console.log('USE EFFECT FOR FILTERS (2)');
+      const baseURL = `/movies/page/${activePage}?language=en-US`;
+      const finalURL = buildURL(
+        baseURL,
+        selectedGenres,
+        selectedReleaseYear,
+        selectedMinRating,
+        selectedMaxRating,
+        selectedSortingPattern,
+        genresMapByName
+      );
+      router.replace(finalURL);
+      fetchMovies(activePage);
     }
   }, [
     selectedGenres,
@@ -119,9 +112,20 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
   ]);
 
   useEffect(() => {
-    console.log('FETCH MOVIES');
-    fetchMovies(currentPage);
-  }, [currentPage, genresMapByName]);
+    if (!initialRender.current) {
+      const baseURL = `/movies/page/${activePage}?language=en-US`;
+      const finalURL = buildURL(
+        baseURL,
+        selectedGenres,
+        selectedReleaseYear,
+        selectedMinRating,
+        selectedMaxRating,
+        selectedSortingPattern,
+        genresMapByName
+      );
+      router.replace(finalURL);
+    }
+  }, [activePage]);
 
   const fetchMovies = async (pageNumber: number): Promise<void> => {
     if (!genresMapByName) {
@@ -140,7 +144,6 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
       genresMapByName
     );
 
-    console.log('CLIENT MOVIES LINK, :  ', finalURL);
     const res = await fetch(finalURL);
 
     const films: TMDBMoviesResponse = await res.json();
@@ -148,7 +151,7 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
     setMovies(films.results);
     setTotalPages(films.total_pages);
     setActivePage(films.page);
-    console.log(films);
+    console.log('RESULT OF FETCH', films);
   };
 
   const fetchGenres = async (): Promise<void> => {
@@ -175,20 +178,8 @@ const MoviesPage: React.FC<{ params: { pageNumber: string } }> = ({ params }) =>
   }, [movies, genresMapById]);
 
   const changePage = (page: number): void => {
-    const baseURL = `/movies/page/${page}?language=en-US`;
-    const finalURL = buildURL(
-      baseURL,
-      selectedGenres,
-      selectedReleaseYear,
-      selectedMinRating,
-      selectedMaxRating,
-      selectedSortingPattern,
-      genresMapByName
-    );
-
-    fetchMovies(1);
-    router.replace(finalURL);
-    //router.push(1)
+    //router.push(finalURL)
+    setActivePage(page);
   };
 
   const resetFilters = (): void => {
